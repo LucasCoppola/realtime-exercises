@@ -15,20 +15,38 @@ chat.addEventListener("submit", function (e) {
 });
 
 async function postNewMsg(user, text) {
-  // post to /poll a new message
-  // write code here
+  const data = { user, text };
+  return await fetch("/poll", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 async function getNewMsgs() {
-  // poll the server
-  // write code here
+  try {
+    const res = await fetch("/poll");
+    const json = await res.json();
+    if (res.status >= 400) {
+      throw new Error("Request failed", res.status);
+    }
+
+    allChat = json.msg;
+    render();
+    failedTries = 0;
+  } catch (e) {
+    console.error("pooling error", e);
+    failedTries++;
+  }
 }
 
 function render() {
   // as long as allChat is holding all current messages, this will render them
   // into the ui. yes, it's inefficent. yes, it's fine for this example
   const html = allChat.map(({ user, text, time, id }) =>
-    template(user, text, time, id)
+    template(user, text, time, id),
   );
   msgs.innerHTML = html.join("\n");
 }
@@ -37,5 +55,17 @@ function render() {
 const template = (user, msg) =>
   `<li class="collection-item"><span class="badge">${user}</span>${msg}</li>`;
 
-// make the first request
-getNewMsgs();
+const BACKOFF = 5000;
+let timeToMakeNextReq = 0;
+let failedTries = 0;
+
+async function reqAnimationFrameTimer(time) {
+  if (timeToMakeNextReq <= time) {
+    await getNewMsgs();
+    timeToMakeNextReq =
+      document.timeline.currentTime + INTERVAL + failedTries * BACKOFF;
+  }
+  requestAnimationFrame(reqAnimationFrameTimer);
+}
+
+requestAnimationFrame(reqAnimationFrameTimer);

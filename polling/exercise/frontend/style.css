@@ -11,3 +11,8 @@ h1 {
 .btn-box {
   text-align: center;
 }
+
+.collection {
+  height: 280px;
+  overflow-y: scroll;
+}
