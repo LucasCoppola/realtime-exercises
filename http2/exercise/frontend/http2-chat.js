@@ -32,16 +32,52 @@ async function postNewMsg(user, text) {
 }
 
 async function getNewMsgs() {
-  /*
-   *
-   * code goes here
-   *
-   */
+  let reader;
+  const utf8Decoder = new TextDecoder("utf-8");
+
+  try {
+    const res = await fetch("msgs");
+    reader = res.body.getReader();
+  } catch (e) {
+    console.error("connection error: ", e);
+  }
+
+  presence.classList.remove("red");
+  presence.classList.add("green");
+
+  let readerResponse;
+  let done;
+  do {
+    try {
+      readerResponse = await reader.read();
+    } catch (e) {
+      console.error("reader failed: ", e);
+      presence.classList.remove("green");
+      presence.classList.add("red");
+      return;
+    }
+
+    const chunk = utf8Decoder.decode(readerResponse.value, { stream: true });
+    done = readerResponse.done;
+
+    if (chunk) {
+      try {
+        const json = JSON.parse(chunk);
+        allChat = json.msg;
+        render();
+      } catch (e) {
+        console.error("reader failed: ", e);
+      }
+    }
+  } while (!done);
+
+  presence.classList.remove("green");
+  presence.classList.add("red");
 }
 
 function render() {
   const html = allChat.map(({ user, text, time, id }) =>
-    template(user, text, time, id)
+    template(user, text, time, id),
   );
   msgs.innerHTML = html.join("\n");
 }

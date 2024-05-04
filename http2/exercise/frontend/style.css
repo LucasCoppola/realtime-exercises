@@ -13,7 +13,18 @@ h1 {
 }
 
 #presence-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
   position: absolute;
-  top: 5px;
+  top: 8px;
   right: 15px;
+}
+
+.red {
+  background-color: red;
+}
+
+.green {
+  background-color: green;
 }
